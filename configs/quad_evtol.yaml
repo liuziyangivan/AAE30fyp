@@ -1,0 +1,37 @@
+# 四旋翼 eVTOL 概念设计配置
+vehicle:
+  name: "Quad-eVTOL-01"
+  description: "4-rotor conceptual eVTOL for FYP digital twin"
+
+  # 机身
+  fuselage:
+    length_m: 2.5        # 机身长度
+    width_m:  1.2        # 机身宽度
+    height_m: 0.6        # 机身高度
+    mass_kg:  40.0       # 机身质量（不含旋翼和电机）
+
+  # 有效载荷
+  payload_kg: 20.0
+
+  # 旋翼（所有旋翼参数相同，位置不同）
+  rotors:
+    count: 4
+    radius_m:    0.4     # 桨叶半径
+    chord_m:     0.05    # 弦长
+    num_blades:  2       # 桨叶数
+    mass_kg:     0.5     # 单个旋翼质量
+    Cl_alpha:    5.73    # 升力线斜率 (1/rad)，薄翼理论值 ≈ 2π
+    Cd0:         0.012   # 零升阻力系数
+    rpm_max:     6000    # 最大转速
+
+    # 旋翼位置（相对机身中心，单位 m）
+    positions:
+      - [ 1.0,  1.0, 0.0]   # 前右
+      - [ 1.0, -1.0, 0.0]   # 前左
+      - [-1.0,  1.0, 0.0]   # 后右
+      - [-1.0, -1.0, 0.0]   # 后左
+
+  # 飞行环境（标准大气，海平面）
+  environment:
+    air_density_kg_m3: 1.225
+    gravity_m_s2:      9.81
