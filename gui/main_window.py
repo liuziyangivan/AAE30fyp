@@ -1,6 +1,9 @@
 """
 gui/main_window.py
-eVTOL Digital Twin — PyQt6 主窗口（Step 7：实时仿真接入）
+eVTOL Digital Twin — PyQt6 主窗口
+包含两个标签页：
+- 📡 Live Control：实时仿真、仪表、折线图
+- 📊 Envelope Analysis：飞行包线分析（推力/功率/FM 扫描）
 """
 
 from __future__ import annotations
@@ -11,7 +14,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout,
     QLabel, QSlider, QPushButton, QGroupBox,
-    QProgressBar, QSizePolicy,
+    QProgressBar, QSizePolicy, QTabWidget,
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
 from PyQt6.QtGui import QFont, QPalette, QColor
@@ -20,9 +23,10 @@ from pathlib import Path
 from core.vehicle import load_vehicle
 from core.event_bus import EventBus
 from core.digital_twin import DigitalTwin, TwinState
-from simulation.flight_sim import FlightSimulator, SimConfig
-from simulation.flight_sim import SimFrame                   # ← 帧数据
+from simulation.flight_sim import FlightSimulator, SimConfig, SimFrame
 from gui.altitude_plot import AltitudePlot
+from gui.envelope_panel import EnvelopePanel          # Step 9 新增
+
 
 # ── 颜色常量 ─────────────────────────────────────────────
 CLR_BG      = "#1e1e2e"
@@ -82,7 +86,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("eVTOL Digital Twin")
-        self.setMinimumSize(760, 560)
+        self.setMinimumSize(820, 660)
         self._setup_palette()
 
         # 数字孪生
@@ -100,11 +104,21 @@ class MainWindow(QMainWindow):
         self._bridge.frame_ready.connect(self._on_frame)
         self._bridge.sim_done.connect(self._on_sim_done)
 
-        # ── 布局 ────────────────────────────────────────
-        root = QWidget()
-        self.setCentralWidget(root)
-        root.setStyleSheet(f"background-color: {CLR_BG};")
-        vbox = QVBoxLayout(root)
+        # ── 标签页容器 ────────────────────────────────────
+        tabs = QTabWidget()
+        tabs.setStyleSheet(f"""
+            QTabWidget::pane   {{ border: none; background: {CLR_BG}; }}
+            QTabBar::tab       {{ background: #2A2A3E; color: #CDD6F4;
+                                  padding: 6px 18px; border-radius: 4px 4px 0 0; }}
+            QTabBar::tab:selected {{ background: #313244; color: #CDD6F4;
+                                     font-weight: bold; }}
+        """)
+        self.setCentralWidget(tabs)
+
+        # ── Tab 1: Live Control ────────────────────────────
+        control_tab = QWidget()
+        control_tab.setStyleSheet(f"background: {CLR_BG};")
+        vbox = QVBoxLayout(control_tab)
         vbox.setContentsMargins(16, 16, 16, 16)
         vbox.setSpacing(12)
 
@@ -115,6 +129,12 @@ class MainWindow(QMainWindow):
 
         vbox.addLayout(self._build_metrics())
         vbox.addWidget(self._build_altitude_bar())
+        self._status_lbl = _label("Status: GROUNDED", size=10,
+                                   color=CLR_YELLOW)
+        self._status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        vbox.addWidget(self._status_lbl)
+        vbox.addWidget(self._build_sim_controls())
+        vbox.addWidget(self._build_manual_controls())
 
         # 折线图
         self._plot = AltitudePlot()
@@ -123,16 +143,15 @@ class MainWindow(QMainWindow):
         self._plot.set_target_alt(self._target_alt)
         vbox.addWidget(self._plot, 1)
 
-        self._status_lbl = _label("Status: GROUNDED", size=10,
-                                   color=CLR_YELLOW)
-        self._status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        vbox.addWidget(self._status_lbl)
-        vbox.addWidget(self._build_sim_controls())
-        vbox.addWidget(self._build_manual_controls())
-
         self._time_lbl = _label("", size=8, color=CLR_SUBTEXT)
         self._time_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
         vbox.addWidget(self._time_lbl)
+
+        tabs.addTab(control_tab, "📡  Live Control")
+
+        # ── Tab 2: Envelope Analysis (Step 9) ──────────────
+        self._envelope = EnvelopePanel(vehicle)
+        tabs.addTab(self._envelope, "📊  Envelope Analysis")
 
         # 时钟定时器
         tmr = QTimer(self)
@@ -278,13 +297,13 @@ class MainWindow(QMainWindow):
             self._btn_fly.setText("▶  START SIM")
             self._btn_fly.setStyleSheet(self._btn_style(CLR_GREEN))
         else:
-            self._plot.clear()
             self._start_sim()
 
     def _start_sim(self):
         self._sim_running = True
         self._btn_fly.setText("⬛  STOP SIM")
         self._btn_fly.setStyleSheet(self._btn_style(CLR_RED))
+        self._plot.clear()
 
         cfg = SimConfig(
             dt=0.05,
@@ -296,14 +315,11 @@ class MainWindow(QMainWindow):
         def _run():
             def _cb(frame: SimFrame):
                 if not self._sim_running:
-                    raise StopIteration        # 强制提前退出
+                    return          # 提前退出，不再抛异常
                 self._bridge.frame_ready.emit(frame)
-                time.sleep(cfg.dt * 0.8)       # 接近实时播放
+                time.sleep(cfg.dt * 0.8)
 
-            try:
-                sim.run(callback=_cb)
-            except StopIteration:
-                pass
+            sim.run(callback=_cb)
             self._bridge.sim_done.emit()
 
         self._sim_thread = threading.Thread(target=_run, daemon=True)
@@ -316,8 +332,6 @@ class MainWindow(QMainWindow):
         self._card_thrust.set_value(frame.thrust_N)
         self._card_power.set_value(frame.power_W / 1000)
         self._alt_bar.setValue(int(min(frame.altitude_m, 200)))
-        self._plot.append(frame.t, frame.altitude_m,
-                          frame.velocity_ms, frame.thrust_N)
 
         if frame.altitude_m > 0.05:
             self._status_lbl.setText(
@@ -328,6 +342,10 @@ class MainWindow(QMainWindow):
         else:
             self._status_lbl.setText("Status: GROUNDED")
             self._status_lbl.setStyleSheet(f"color: {CLR_YELLOW};")
+
+        # 更新折线图
+        self._plot.append(frame.t, frame.altitude_m,
+                          frame.velocity_ms, frame.thrust_N)
 
     def _on_sim_done(self):
         self._sim_running = False
