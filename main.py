@@ -2,44 +2,58 @@
 eVTOL Digital Twin — entry point
 """
 
-import sys
+import sys, time
 from pathlib import Path
 import numpy as np
 import yaml
 
 from core.vehicle import load_vehicle
-from core.aero_engine import AeroEngine
+from core.event_bus import EventBus
+from core.digital_twin import DigitalTwin
 
 
 def main():
-    print("=" * 52)
-    print("  eVTOL Digital Twin — Step 3: Aero Engine")
-    print("=" * 52)
+    print("=" * 54)
+    print("  eVTOL Digital Twin — Step 4: Twin State Machine")
+    print("=" * 54)
 
     vehicle = load_vehicle(Path("configs/quad_evtol.yaml"))
-    engine  = AeroEngine(vehicle)
+    bus     = EventBus()
+    twin    = DigitalTwin(vehicle, bus)
 
-    print(f"  Vehicle : {vehicle.name}")
-    print(f"  Mass    : {vehicle.total_mass_kg:.1f} kg  "
-          f"Weight: {vehicle.total_weight_N:.1f} N")
-    print("-" * 52)
+    # ── 注册事件监听器 ──────────────────────────────────
+    log = []
+    bus.subscribe("state_updated",
+                  lambda state: log.append(f"  [UPDATE] RPM={state.rpm:.0f}  "
+                                           f"T={state.performance.total_thrust_N:.1f} N  "
+                                           f"P={state.performance.total_power_W/1000:.2f} kW"))
 
-    # 测试三个转速点
-    for rpm in [2000, 4000, 6000]:
-        perf = engine.compute(rpm)
-        print(f"\n  @ {rpm} RPM")
-        print(f"    Rotor    : {perf.rotor}")
-        print(f"    Total T  : {perf.total_thrust_N:.1f} N  "
-              f"Total P: {perf.total_power_W/1000:.2f} kW")
-        print(f"    Margin   : {perf.thrust_margin_N:+.1f} N  "
-              f"{'✓ hover OK' if perf.can_hover else '✗ below hover'}")
+    bus.subscribe("hover_achieved",
+                  lambda state: print(f"  *** HOVER ACHIEVED @ {state.rpm:.0f} RPM ***"))
 
-    print("\n" + "-" * 52)
-    hover = engine.compute(3000)
-    print(f"  Hover RPM: {hover.hover_rpm:.0f} RPM")
-    print("=" * 52)
-    print("  Step 3 complete.")
-    print("=" * 52)
+    bus.subscribe("below_hover",
+                  lambda state: print(f"  *** BELOW HOVER   @ {state.rpm:.0f} RPM ***"))
+
+    # ── 模拟转速爬升序列 ────────────────────────────────
+    print(f"\n  Simulating RPM ramp-up...")
+    print(f"  Hover RPM target: {twin.hover_rpm:.0f} RPM\n")
+
+    for rpm in [0, 1000, 2000, 3000, 4000, 4508, 5000, 6000, 4000, 2000]:
+        twin.set_rpm(rpm)
+
+    print("\n  Event log:")
+    for entry in log:
+        print(entry)
+
+    print("\n" + "=" * 54)
+    print("  Final state:")
+    print(f"    RPM      : {twin.state.rpm:.0f}")
+    print(f"    Thrust   : {twin.state.performance.total_thrust_N:.1f} N")
+    print(f"    Power    : {twin.state.performance.total_power_W/1000:.2f} kW")
+    print(f"    Hovering : {twin.state.performance.can_hover}")
+    print("=" * 54)
+    print("  Step 4 complete.")
+    print("=" * 54)
 
 
 if __name__ == "__main__":
