@@ -22,7 +22,7 @@ from core.event_bus import EventBus
 from core.digital_twin import DigitalTwin, TwinState
 from simulation.flight_sim import FlightSimulator, SimConfig
 from simulation.flight_sim import SimFrame                   # ← 帧数据
-
+from gui.altitude_plot import AltitudePlot
 
 # ── 颜色常量 ─────────────────────────────────────────────
 CLR_BG      = "#1e1e2e"
@@ -115,6 +115,14 @@ class MainWindow(QMainWindow):
 
         vbox.addLayout(self._build_metrics())
         vbox.addWidget(self._build_altitude_bar())
+
+        # 折线图
+        self._plot = AltitudePlot()
+        self._plot.setMinimumHeight(280)
+        self._plot.set_weight(vehicle.total_weight_N)
+        self._plot.set_target_alt(self._target_alt)
+        vbox.addWidget(self._plot, 1)
+
         self._status_lbl = _label("Status: GROUNDED", size=10,
                                    color=CLR_YELLOW)
         self._status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -270,6 +278,7 @@ class MainWindow(QMainWindow):
             self._btn_fly.setText("▶  START SIM")
             self._btn_fly.setStyleSheet(self._btn_style(CLR_GREEN))
         else:
+            self._plot.clear()
             self._start_sim()
 
     def _start_sim(self):
@@ -307,6 +316,8 @@ class MainWindow(QMainWindow):
         self._card_thrust.set_value(frame.thrust_N)
         self._card_power.set_value(frame.power_W / 1000)
         self._alt_bar.setValue(int(min(frame.altitude_m, 200)))
+        self._plot.append(frame.t, frame.altitude_m,
+                          frame.velocity_ms, frame.thrust_N)
 
         if frame.altitude_m > 0.05:
             self._status_lbl.setText(
@@ -339,6 +350,7 @@ class MainWindow(QMainWindow):
     def _on_alt_slider(self, value: int):
         self._target_alt = float(value)
         self._alt_label.setText(f"{value} m")
+        self._plot.set_target_alt(float(value))
 
     def _set_rpm(self, rpm: float):
         self._slider.blockSignals(True)
