@@ -2,7 +2,7 @@
 eVTOL Digital Twin — entry point
 """
 
-import sys, time
+import sys
 from pathlib import Path
 import numpy as np
 import yaml
@@ -10,50 +10,47 @@ import yaml
 from core.vehicle import load_vehicle
 from core.event_bus import EventBus
 from core.digital_twin import DigitalTwin
+from simulation.flight_sim import FlightSimulator, SimConfig
 
 
 def main():
-    print("=" * 54)
-    print("  eVTOL Digital Twin — Step 4: Twin State Machine")
-    print("=" * 54)
+    print("=" * 56)
+    print("  eVTOL Digital Twin — Step 5: Flight Simulator")
+    print("=" * 56)
 
     vehicle = load_vehicle(Path("configs/quad_evtol.yaml"))
     bus     = EventBus()
     twin    = DigitalTwin(vehicle, bus)
 
-    # ── 注册事件监听器 ──────────────────────────────────
-    log = []
-    bus.subscribe("state_updated",
-                  lambda state: log.append(f"  [UPDATE] RPM={state.rpm:.0f}  "
-                                           f"T={state.performance.total_thrust_N:.1f} N  "
-                                           f"P={state.performance.total_power_W/1000:.2f} kW"))
+    cfg = SimConfig(dt=0.05, duration_s=30.0, target_alt_m=10.0)
+    sim = FlightSimulator(twin, cfg)
 
-    bus.subscribe("hover_achieved",
-                  lambda state: print(f"  *** HOVER ACHIEVED @ {state.rpm:.0f} RPM ***"))
+    print(f"  Hover RPM : {twin.hover_rpm:.0f} RPM")
+    print(f"  Target Alt: {cfg.target_alt_m} m")
+    print(f"  Duration  : {cfg.duration_s} s  (dt={cfg.dt} s)")
+    print(f"\n  Running simulation...\n")
 
-    bus.subscribe("below_hover",
-                  lambda state: print(f"  *** BELOW HOVER   @ {state.rpm:.0f} RPM ***"))
+    frames = sim.run()
 
-    # ── 模拟转速爬升序列 ────────────────────────────────
-    print(f"\n  Simulating RPM ramp-up...")
-    print(f"  Hover RPM target: {twin.hover_rpm:.0f} RPM\n")
+    # 打印关键帧（每 2 秒一行）
+    step = int(2.0 / cfg.dt)
+    print(f"  {'t(s)':>5}  {'Alt(m)':>7}  {'Vel(m/s)':>8}  "
+          f"{'RPM':>6}  {'Thrust(N)':>10}  {'Power(kW)':>9}")
+    print("  " + "-" * 56)
+    for i, f in enumerate(frames):
+        if i % step == 0:
+            print(f"  {f.t:5.1f}  {f.altitude_m:7.2f}  {f.velocity_ms:8.3f}  "
+                  f"  {f.rpm:6.0f}  {f.thrust_N:10.1f}  {f.power_W/1000:9.2f}")
 
-    for rpm in [0, 1000, 2000, 3000, 4000, 4508, 5000, 6000, 4000, 2000]:
-        twin.set_rpm(rpm)
-
-    print("\n  Event log:")
-    for entry in log:
-        print(entry)
-
-    print("\n" + "=" * 54)
-    print("  Final state:")
-    print(f"    RPM      : {twin.state.rpm:.0f}")
-    print(f"    Thrust   : {twin.state.performance.total_thrust_N:.1f} N")
-    print(f"    Power    : {twin.state.performance.total_power_W/1000:.2f} kW")
-    print(f"    Hovering : {twin.state.performance.can_hover}")
-    print("=" * 54)
-    print("  Step 4 complete.")
-    print("=" * 54)
+    max_alt = max(f.altitude_m for f in frames)
+    max_pwr = max(f.power_W    for f in frames)
+    print("  " + "-" * 56)
+    print(f"\n  Peak altitude : {max_alt:.2f} m")
+    print(f"  Peak power    : {max_pwr/1000:.2f} kW")
+    print(f"  Total frames  : {len(frames)}")
+    print("=" * 56)
+    print("  Step 5 complete.")
+    print("=" * 56)
 
 
 if __name__ == "__main__":
