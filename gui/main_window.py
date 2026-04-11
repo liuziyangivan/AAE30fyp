@@ -26,6 +26,7 @@ from core.digital_twin import DigitalTwin, TwinState
 from simulation.flight_sim import FlightSimulator, SimConfig, SimFrame
 from gui.altitude_plot import AltitudePlot
 from gui.envelope_panel import EnvelopePanel          # Step 9 新增
+from gui.widgets.replay_widget import ReplayWidget
 
 
 # ── 颜色常量 ─────────────────────────────────────────────
@@ -152,6 +153,10 @@ class MainWindow(QMainWindow):
         # ── Tab 2: Envelope Analysis (Step 9) ──────────────
         self._envelope = EnvelopePanel(vehicle)
         tabs.addTab(self._envelope, "📊  Envelope Analysis")
+
+        # ── Tab 3: Replay (Step 10) ────────────────────────
+        self._replay = ReplayWidget()
+        tabs.addTab(self._replay, "⏪ Replay")
 
         # 时钟定时器
         tmr = QTimer(self)

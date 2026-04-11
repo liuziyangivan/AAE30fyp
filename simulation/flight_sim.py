@@ -10,8 +10,8 @@ import math
 import time
 from dataclasses import dataclass, field
 from typing import Callable
-
 from core.digital_twin import DigitalTwin
+from core.data_recorder import DataRecorder, FlightRecord
 
 
 # ── 仿真帧数据 ────────────────────────────────────────────
@@ -103,6 +103,7 @@ class FlightSimulator:
         self._rho       = twin.vehicle.environment.air_density_kg_m3
         self._mass      = twin.vehicle.total_mass_kg
         self._g         = twin.vehicle.environment.gravity_m_s2
+        self._recorder  = DataRecorder()
 
     # ── 欧拉积分单步 ──────────────────────────────────────
     def _step(self, t: float, alt: float, vel: float) -> SimFrame:
@@ -155,13 +156,22 @@ class FlightSimulator:
         t = 0.0
 
         steps = int(cfg.duration_s / cfg.dt)
-
+        self._recorder.start()
+        
         for _ in range(steps):
             frame = self._step(t, alt, vel)
             frames.append(frame)
 
             if callback:
                 callback(frame)
+                self._recorder.record(FlightRecord(
+                    t           = frame.t,
+                    altitude_m  = frame.altitude_m,
+                    velocity_ms = frame.velocity_ms,
+                    rpm         = frame.rpm,
+                    thrust_N    = frame.thrust_N,
+                    power_W     = frame.power_W,
+                ))
 
             if realtime:
                 time.sleep(cfg.dt)
@@ -172,4 +182,9 @@ class FlightSimulator:
 
         # 发布仿真结束事件
         self._twin._bus.publish(self.EVT_SIM_DONE, frames=frames)
-        return frames
+    
+        saved = self._recorder.stop()
+        if saved:
+            print(f"[DataRecorder] Saved → {saved}")
+
+        return frame
