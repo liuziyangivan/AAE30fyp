@@ -112,7 +112,8 @@ class View3DWidget(QtWidgets.QWidget):
             g = gl.GLGridItem()
             g.setSize(size, size)
             g.setSpacing(spacing, spacing)
-            g.setColor(_r(_GRID_COL) + (alpha,))
+            r, gg, b, _ = _r(_GRID_COL)
+            g.setColor((r, gg, b, alpha))
             self._view.addItem(g)
 
         # 地面实色平面

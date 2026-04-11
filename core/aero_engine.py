@@ -83,40 +83,55 @@ class AeroEngine:
 
     # ── 单旋翼 BET 积分 ───────────────────────────────────
     def _compute_rotor(self, rpm: float) -> RotorPerformance:
-        omega = rpm * 2 * math.pi / 60          # RPM → rad/s
+        if rpm <= 0:
+            return RotorPerformance(rpm=0, omega_rad_s=0, thrust_N=0,
+                                    torque_Nm=0, power_W=0, figure_of_merit=0)
+
+        omega = rpm * 2 * math.pi / 60
         r     = self.r_arr
+        R     = self.R
+        A     = math.pi * R ** 2
 
-        # 局部切向速度
-        V_t = omega * r                          # (m/s)
+        # ── 动量理论迭代求诱导速度 ──────────────────────────
+        # 初始猜测
+        v_tip = omega * R
+        lambda_i = math.sqrt(max(
+            self.v.total_weight_N / self.v.rotors.count
+            / (2 * self.rho * A), 0.0)) / v_tip
 
-        # 悬停时入流速度（用动量理论迭代估算 λ，这里简化取 λ = θ/3）
-        lambda_i = self.theta_rad / 3.0          # 入流比（简化）
-        V_i      = lambda_i * omega * self.R     # 诱导速度 (m/s)
+        for _ in range(50):   # 迭代收敛
+            V_i    = lambda_i * v_tip
+            V_t    = omega * r
+            phi    = np.arctan2(V_i, V_t)
+            alpha  = self.theta_rad - phi
+            Cl_loc = self.Cl * np.clip(alpha, -0.3, 0.3)
+            dT     = 0.5 * self.rho * (V_t**2 + V_i**2) * self.c * self.B * Cl_loc * self.dr
+            T_new  = float(np.sum(dT))
+            lambda_new = math.sqrt(max(T_new / (2 * self.rho * A), 0.0)) / v_tip
+            if abs(lambda_new - lambda_i) < 1e-6:
+                break
+            lambda_i = 0.5 * lambda_i + 0.5 * lambda_new   # 松弛
 
-        # 来流角 φ
-        phi = np.arctan2(V_i, V_t)              # rad
+        # ── 最终 BET 积分 ────────────────────────────────────
+        V_i    = lambda_i * v_tip
+        V_t    = omega * r
+        V_eff  = np.sqrt(V_t**2 + V_i**2)
+        phi    = np.arctan2(V_i, V_t)
+        alpha  = self.theta_rad - phi
+        alpha  = np.clip(alpha, -0.3, 0.3)
 
-        # 有效攻角
-        alpha = self.theta_rad - phi             # rad
+        Cl_loc = self.Cl * alpha
+        Cd_loc = self.Cd0 + 0.02 * alpha**2   # 抛物线极曲线
 
-        # 截面气动系数
-        Cl_local = self.Cl * alpha               # 升力系数
-        Cd_local = self.Cd0 + 0.02 * alpha ** 2  # 阻力系数（简化抛物线极曲线）
-
-        # 动压
-        q = 0.5 * self.rho * V_t ** 2
-
-        # 微元推力 dT 和 微元扭矩 dQ
-        dT = q * self.c * self.B * (Cl_local * np.cos(phi) - Cd_local * np.sin(phi)) * self.dr
-        dQ = q * self.c * self.B * (Cd_local * np.cos(phi) + Cl_local * np.sin(phi)) * r * self.dr
+        q   = 0.5 * self.rho * V_eff**2
+        dT  = q * self.c * self.B * (Cl_loc * np.cos(phi) - Cd_loc * np.sin(phi)) * self.dr
+        dQ  = q * self.c * self.B * (Cd_loc * np.cos(phi) + Cl_loc * np.sin(phi)) * r * self.dr
 
         thrust = float(np.sum(dT))
         torque = float(np.sum(dQ))
         power  = torque * omega
 
-        # 悬停效率 FM = 理想功率 / 实际功率
-        # 理想功率（动量理论）: P_ideal = T * sqrt(T / (2ρA))
-        A = math.pi * self.R ** 2
+        # 悬停效率 FM
         if thrust > 0 and power > 0:
             P_ideal = thrust * math.sqrt(thrust / (2 * self.rho * A))
             fm = min(P_ideal / power, 1.0)
@@ -125,7 +140,7 @@ class AeroEngine:
 
         return RotorPerformance(
             rpm=rpm, omega_rad_s=omega,
-            thrust_N=thrust, torque_Nm=torque,
+            thrust_N=max(thrust, 0.0), torque_Nm=torque,
             power_W=power, figure_of_merit=fm,
         )
 

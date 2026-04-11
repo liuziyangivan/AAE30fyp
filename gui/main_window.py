@@ -30,7 +30,6 @@ from gui.widgets.replay_widget import ReplayWidget    # Step 10 新增
 from core.design_editor import DesignEditor
 from gui.widgets.design_widget import DesignWidget    # Step 11 新增
 from gui.widgets.view3d_widget import View3DWidget    # Step 12 新增
-from gui.widgets.control_widget import ControlWidget  # Step 13 新增
 
 
 # ── 颜色常量 ─────────────────────────────────────────────
@@ -173,10 +172,6 @@ class MainWindow(QMainWindow):
         # Tab 5：三维可视化
         self._view3d = View3DWidget(self._twin.vehicle, self._bus)
         tabs.addTab(self._view3d, "🛸 3D View")
-        
-        # Tab 6：控制算法
-        self._ctrl_widget = ControlWidget(self._sim, self._bus)
-        tabs.addTab(self._ctrl_widget, "🎮 Control")
 
         # 时钟定时器
         tmr = QTimer(self)
