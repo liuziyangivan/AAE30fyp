@@ -26,7 +26,9 @@ from core.digital_twin import DigitalTwin, TwinState
 from simulation.flight_sim import FlightSimulator, SimConfig, SimFrame
 from gui.altitude_plot import AltitudePlot
 from gui.envelope_panel import EnvelopePanel          # Step 9 新增
-from gui.widgets.replay_widget import ReplayWidget
+from gui.widgets.replay_widget import ReplayWidget    # Step 10 新增
+from core.design_editor import DesignEditor
+from gui.widgets.design_widget import DesignWidget    # Step 11 新增
 
 
 # ── 颜色常量 ─────────────────────────────────────────────
@@ -94,6 +96,7 @@ class MainWindow(QMainWindow):
         vehicle    = load_vehicle(Path("configs/quad_evtol.yaml"))
         self._bus  = EventBus()
         self._twin = DigitalTwin(vehicle, self._bus)
+        self._editor = DesignEditor(self._twin.vehicle, self._twin)
         self._bus.subscribe(DigitalTwin.EVT_STATE_UPDATED, self._on_state)
 
         self._sim_thread: threading.Thread | None = None
@@ -158,6 +161,10 @@ class MainWindow(QMainWindow):
         self._replay = ReplayWidget()
         tabs.addTab(self._replay, "⏪ Replay")
 
+        # Tab 4：参数化设计
+        self._design = DesignWidget(self._editor, self._twin.vehicle)
+        tabs.addTab(self._design, "⚙️ Design")
+        
         # 时钟定时器
         tmr = QTimer(self)
         tmr.timeout.connect(
