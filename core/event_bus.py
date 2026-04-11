@@ -6,7 +6,21 @@ core/event_bus.py
 from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Callable
+from dataclasses import dataclass 
 
+@dataclass
+class TwinState:
+    t:     float = 0.0
+    x:     float = 0.0
+    y:     float = 0.0
+    z:     float = 0.0
+    vx:    float = 0.0
+    vy:    float = 0.0
+    vz:    float = 0.0
+    roll:  float = 0.0
+    pitch: float = 0.0
+    yaw:   float = 0.0
+    rpm:   float = 0.0
 
 class EventBus:
     """
@@ -39,3 +53,4 @@ class EventBus:
             self._listeners[event].clear()
         else:
             self._listeners.clear()
+

@@ -29,6 +29,7 @@ from gui.envelope_panel import EnvelopePanel          # Step 9 新增
 from gui.widgets.replay_widget import ReplayWidget    # Step 10 新增
 from core.design_editor import DesignEditor
 from gui.widgets.design_widget import DesignWidget    # Step 11 新增
+from gui.widgets.view3d_widget import View3DWidget                 # Step 12 新增
 
 
 # ── 颜色常量 ─────────────────────────────────────────────
@@ -165,6 +166,10 @@ class MainWindow(QMainWindow):
         self._design = DesignWidget(self._editor, self._twin.vehicle)
         tabs.addTab(self._design, "⚙️ Design")
         
+        # Tab 5：三维可视化
+        self._view3d = View3DWidget(self._twin.vehicle, self._bus)
+        tabs.addTab(self._view3d, "🛸 3D View")
+
         # 时钟定时器
         tmr = QTimer(self)
         tmr.timeout.connect(
@@ -298,7 +303,7 @@ class MainWindow(QMainWindow):
         return (
             f"QPushButton {{ background:{CLR_PANEL}; color:{color};"
             f" border:1px solid {color}; border-radius:6px;"
-            f" padding:6px 12px; font-family:Consolas; font-size:10pt; }}"
+            f" padding:6px 12px; font-family:'Consolas'; font-size:10pt; }}"
             f"QPushButton:hover {{ background:{color}; color:{CLR_BG}; }}"
         )
 
@@ -344,6 +349,7 @@ class MainWindow(QMainWindow):
         self._card_thrust.set_value(frame.thrust_N)
         self._card_power.set_value(frame.power_W / 1000)
         self._alt_bar.setValue(int(min(frame.altitude_m, 200)))
+        self._view3d.set_state(frame.altitude_m, frame.rpm)
 
         if frame.altitude_m > 0.05:
             self._status_lbl.setText(
