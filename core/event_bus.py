@@ -7,9 +7,13 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Callable
 from dataclasses import dataclass 
+from dataclasses import dataclass, field
 
 @dataclass
 class TwinState:
+    timestamp:   float
+    rpm:        float 
+    performance: VehiclePerformance
     t:     float = 0.0
     x:     float = 0.0
     y:     float = 0.0
@@ -20,7 +24,9 @@ class TwinState:
     roll:  float = 0.0
     pitch: float = 0.0
     yaw:   float = 0.0
-    rpm:   float = 0.0
+    position_m:  list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    velocity_ms: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    rpms:        list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
 
 class EventBus:
     """

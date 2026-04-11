@@ -20,6 +20,7 @@ class TwinState:
 
     position_m:  list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     velocity_ms: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    rpms:        list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])  
 
     @property
     def altitude_m(self) -> float:
