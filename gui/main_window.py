@@ -30,7 +30,7 @@ from gui.widgets.replay_widget import ReplayWidget    # Step 10 新增
 from core.design_editor import DesignEditor
 from gui.widgets.design_widget import DesignWidget    # Step 11 新增
 from gui.widgets.view3d_widget import View3DWidget    # Step 12 新增
-
+from gui.widgets.fault_widget import FaultWidget      # Step 13 新增
 
 # ── 颜色常量 ─────────────────────────────────────────────
 CLR_BG      = "#1e1e2e"
@@ -172,6 +172,10 @@ class MainWindow(QMainWindow):
         # Tab 5：三维可视化
         self._view3d = View3DWidget(self._twin.vehicle, self._bus)
         tabs.addTab(self._view3d, "🛸 3D View")
+
+        # Tab 6: 故障容错
+        self._fault = FaultWidget(self._twin.vehicle)
+        tabs.addTab(self._fault, "🔧 Fault Injection")
 
         # 时钟定时器
         tmr = QTimer(self)
@@ -321,14 +325,28 @@ class MainWindow(QMainWindow):
 
     def _start_sim(self):
         self._sim_running = True
+        self._frame_count = 0
+        self._sim_start_t = time.time()
         self._btn_fly.setText("⬛  STOP SIM")
         self._btn_fly.setStyleSheet(self._btn_style(CLR_RED))
         self._plot.clear()
 
+        from simulation.flight_sim import SimConfig, RotorConfig, BatteryConfig, Waypoint
+
+        target_alt = float(self._target_alt)
         cfg = SimConfig(
-            dt=0.05,
-            duration_s=60.0,
-            target_alt_m=float(self._target_alt),
+            dt=0.02,
+            duration_s=180.0,
+            total_mass_kg=60.0,
+            waypoints=[
+                Waypoint(x=0,  y=0,  z=0,          label="起飞点"),
+                Waypoint(x=0,  y=0,  z=target_alt,  speed_ms=3.0, label="爬升"),
+                Waypoint(x=80, y=0,  z=target_alt,  speed_ms=8.0, label="东飞"),
+                Waypoint(x=80, y=60, z=target_alt,  speed_ms=7.0, label="北飞"),
+                Waypoint(x=80, y=60, z=target_alt,  hold_s=8.0,   label="悬停"),
+                Waypoint(x=0,  y=0,  z=target_alt,  speed_ms=7.0, label="返航"),
+                Waypoint(x=0,  y=0,  z=0,           speed_ms=2.0, label="降落"),
+            ],
         )
         sim = FlightSimulator(self._twin, cfg)
 
