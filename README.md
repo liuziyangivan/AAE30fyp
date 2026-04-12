@@ -105,14 +105,104 @@ Run all unit tests:
 pytest tests/ -v
 ```
 ## Usage Guide  
-Tab 1: Main control console  
-![]("C:\Users\admin\Desktop\Tab1.1.png")
-![]("C:\Users\admin\Desktop\Tab1.2.png")
+Tab 1: Main control console
+
+The tab serves as the primary cockpit for real‑time monitoring and manual intervention.
+
+It is organized into four functional zones:  
+| Zone | Purpose | Key Elements |  
+|------|---------|--------------|
+| **Observability Dashboard** | Real‑time telemetry | Altitude, vertical speed, optimal RPM, thrust, power gauges |
+| **3D Visualization Canvas** | Spatial awareness | eVTOL model with animated rotors, altitude‑colored trail, reset/clear/follow camera controls |
+| **Controllability Panel** | Manual overrides | RPM slider with STOP / TAKEOFF / HOVER / LAND presets |
+| **Design Editor Sidebar** | Quick parameter tuning | Rotor geometry (radius, chord, blades, Cl_alpha, Cd0) and mass (fuselage, payload) with one‑click **Apply / Solve RPM** |
+
+A typical workflow:  
+1. **Adjust rotor/mass parameters** in the Design Editor and click **Apply_Solve RPM** – the optimal hover RPM updates instantly.  
+2. **Use manual presets** to test takeoff, hover, or landing behaviour.  
+3. **Watch the 3D view** – the aircraft model responds in real time, and the trail color shifts with altitude.  
+4. **Monitor the dashboard cards** – all critical values (altitude, RPM, thrust, power) are displayed with large, high‑contrast fonts suitable for presentation screens.
+
+> *Screenshot reference (Tab 1.1and1.2)*  
 
 
-Tab 2: Data playback  
-- Recorded Flights: Every simulation automatically saves a CSV file in the data/ folder.
-- Playback: Select a file from the dropdown, then click PLAY to replay the flight. Adjust playback speed (0.5× – 4×) and watch the trajectory cursor move along the curves.
+Tab 2: Data playback
 
+The tab provides a complete flight data playback environment, allowing you to review any previously recorded simulation session.
+
+#### Flight Record Selection
+
+| Control | Description |
+|---------|-------------|
+| **File dropdown** | Lists all CSV flight logs stored in the `data/` directory (format: `flight_YYYYMMDD_HHMMSS_microseconds.csv`). |
+| **Refresh button** | Rescans the `data/` folder and updates the dropdown list. |
+| **Info label** | Displays the number of recorded frames and total flight duration (e.g., *"2235 frames · 111.7 s"*). |
+
+#### Playback Controls
+
+| Element | Function |
+|---------|----------|
+| **Progress slider** | Shows current playback position; you can drag to seek anywhere in the timeline. |
+| **Time label** | Current playback timestamp (e.g., *"0.0 s"*). |
+| **Speed selector** | Choose playback speed: `0.5×`, `1×`, `2×`, or `4×`. |
+| **PLAY / STOP** | Start or pause the replay. |
+| **RESET** | Jump back to the beginning of the flight. |
+
+#### Telemetry Charts
+
+Three synchronized plots display the full flight history:
+
+| Chart | Y‑Axis | Color | Description |
+|-------|--------|-------|-------------|
+| **Altitude** | Meters (m) | Blue | Aircraft height above ground. |
+| **Total Thrust** | Newtons (N) | Green | Combined thrust from all rotors. |
+| **Total Power** | Kilowatts (kW) | Yellow | Electrical power consumed by the propulsion system. |
+
+- **Live cursor**: A circular marker moves along each curve in real time during playback, indicating the exact data point corresponding to the current timestamp.
+- **Zoom & pan**: Use the mouse to zoom into specific time intervals or pan across the chart (standard `pyqtgraph` interactions).
+
+#### Typical Usage Scenario
+
+1. Run a simulation in the **Live Control** tab – the flight data is automatically saved to `data/`.
+2. Switch to the **Replay** tab and click **Refresh** to load the latest file.
+3. Select the desired CSV file from the dropdown.
+4. Press **PLAY** to watch the flight unfold on the charts.
+5. Adjust the speed or seek to interesting events (e.g., takeoff, hover, fault injection).
+
+> *Screenshot reference (Tab 2.2)*  
+
+
+## Testing
+
+The project includes comprehensive unit tests covering:
+
+- Vehicle configuration loading (test_vehicle.py)
+
+- Aerodynamic engine (BET) (test_aero.py)
+
+- Event bus and digital twin state machine (test_twin.py)
+
+- Flight simulator with waypoint navigation and battery model (test_sim.py)
+
+- Performance analyzer (test_analysis.py)
+
+- Data recorder and replay (test_recorder.py)
+
+- Design editor (test_design_editor.py)
+
+- Flight with PID and LQR (test_controllers.py)
+
+Run all tests with:
+```bash
+pytest tests/ -v --tb=short
+```
+
+## Contributor
+
+- LIU Ziyang, CAI Jialiang, and WANG Yetian.
+
+- *Supervisor: ZHONG Siyang*
+
+This project was developed as part of the Final Year Project requirement for the Bachelor of Aviation Engineering degree.
 
 
