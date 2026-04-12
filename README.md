@@ -71,5 +71,10 @@ evtol_digital_twin/
 └── README.md
 ```
 
+## Installation  
+1. Clone the repository
+2. 
+
+
 
 
