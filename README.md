@@ -1,5 +1,6 @@
 # **eVTOL Digital Twin**  
 
+
 ## Final Year Project · Real‑Time Simulation & Visualization Platform
 
 
@@ -11,6 +12,7 @@
 
 
 A comprehensive digital twin framework for a conceptual electric Vertical Take‑Off and Landing (eVTOL) aircraft. The system integrates real‑time aerodynamic simulation, parametric design exploration, 3D visualization, data recording and Fault introduction simulation — all built in Python.
+
 
 ## Table of Contents  
 - Features
@@ -28,6 +30,7 @@ A comprehensive digital twin framework for a conceptual electric Vertical Take�
 - Contributor
 
 
+
 ## Features  
 | Module | Description |
 |-------|-------|
@@ -38,6 +41,7 @@ A comprehensive digital twin framework for a conceptual electric Vertical Take�
 | Data Recording | Automatic CSV logging of all flight parameters; replay any previous flight with speed control. |  
 | 3D Visualization | OpenGL rendering of the eVTOL model, animated rotors, thrust cones, and altitude‑colored trail. |  
 | Fault Injection | Simulate single‑rotor failure to evaluate emergency descent behavior (planned). |
+
 
 ## Project Structure  
 ```plaintext
@@ -71,10 +75,44 @@ evtol_digital_twin/
 └── README.md
 ```
 
-## Installation  
-1. Clone the repository
-2. 
 
+## Installation  
+1.Clone the repository
+```bash
+git clone https://github.com/liuziyangivan/AAE-30-Final-Year-Project.git
+cd evtol-digital-twin
+```
+
+2.Create and activate a virtual environment (recommended)
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+3.Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+## Quick start
+Launch the main application:  
+```bash
+cd evtol-digital-twin
+python main.py
+```
+Run all unit tests:
+```bash
+pytest tests/ -v
+```
+## Usage Guide  
+Tab 1: Main control console  
+![]("C:\Users\admin\Desktop\Tab1.1.png")
+![]("C:\Users\admin\Desktop\Tab1.2.png")
+
+
+Tab 2: Data playback  
+- Recorded Flights: Every simulation automatically saves a CSV file in the data/ folder.
+- Playback: Select a file from the dropdown, then click PLAY to replay the flight. Adjust playback speed (0.5× – 4×) and watch the trajectory cursor move along the curves.
 
 
 
