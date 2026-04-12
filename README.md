@@ -13,16 +13,16 @@
 A comprehensive digital twin framework for a conceptual electric Vertical Take‑Off and Landing (eVTOL) aircraft. The system integrates real‑time aerodynamic simulation, parametric design exploration, 3D visualization, data recording and Fault introduction simulation — all built in Python.
 
 ## Table of Contents  
--Features  
+- Features  
 
--Project Structure
+- Project Structure
 
--Installation
+- Installation
 
--Quick Start
+- Quick Start
 
--Usage Guide  
+- Usage Guide  
 
--Testing  
+- Testing  
 
--License
+- License
