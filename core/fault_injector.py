@@ -49,39 +49,39 @@ class FaultAnalysis:
 # ── 预设故障场景 ──────────────────────────────────────────
 FAULT_PRESETS = {
     "normal": {
-        "label": "✅ 正常",
+        "label": "✅ Normal 正常",
         "healths": [1.0, 1.0, 1.0, 1.0],
-        "description": "所有旋翼正常工作",
+        "description": "All the rotors are functioning properly. 所有旋翼正常工作",
     },
     "single_fail_fl": {
-        "label": "❌ 前左失效",
+        "label": "❌ Left front failure 前左失效",
         "healths": [0.0, 1.0, 1.0, 1.0],
-        "description": "旋翼 FL（前左）完全失效",
+        "description": "The rotor FL has completely failed. 旋翼 FL（前左）完全失效",
     },
     "single_fail_fr": {
-        "label": "❌ 前右失效",
+        "label": "❌ Front right failure 前右失效",
         "healths": [1.0, 0.0, 1.0, 1.0],
-        "description": "旋翼 FR（前右）完全失效",
+        "description": "The rotor FR has completely failed. 旋翼 FR（前右）完全失效",
     },
     "single_degrade": {
-        "label": "⚠️ 单旋翼50%",
+        "label": "⚠️ Single-rotor 50% 单旋翼50%",
         "healths": [0.5, 1.0, 1.0, 1.0],
-        "description": "旋翼 FL 推力下降至 50%",
+        "description": "The rotor FL thrust has decreased to 50%. 旋翼 FL 推力下降至 50%",
     },
     "diagonal_fail": {
-        "label": "💀 对角失效",
+        "label": "❌ Diagonal failure 对角失效",
         "healths": [0.0, 1.0, 1.0, 0.0],
-        "description": "对角旋翼（FL+RR）同时失效",
+        "description": "Diagonal rotor (FL + RR) both fail simultaneously. 对角旋翼（FL+RR）同时失效",
     },
     "two_degrade": {
-        "label": "⚠️ 双旋翼70%",
+        "label": "⚠️ Dual-rotor 70% 双旋翼70%",
         "healths": [0.7, 0.7, 1.0, 1.0],
-        "description": "前方两旋翼均下降至 70%",
+        "description": "The two rotors ahead have both descended to 70%. 前方两旋翼均下降至 70%",
     },
     "three_degrade": {
-        "label": "🚨 三旋翼退化",
+        "label": "⚠️ Three-rotor degradation 三旋翼退化",
         "healths": [0.6, 0.8, 1.0, 0.7],
-        "description": "三个旋翼不同程度退化",
+        "description": "Three rotors have experienced varying degrees of deterioration. 三个旋翼不同程度退化",
     },
 }
 
@@ -197,19 +197,19 @@ class FaultInjector:
 
         # 操作建议
         if risk == "CRITICAL":
-            rec = "🚨 立即紧急着陆！推力不足或姿态失控风险极高。"
+            rec = "🚨 Immediate emergency landing! There is an extremely high risk of insufficient thrust or loss of control of the aircraft."
         elif risk == "DEGRADED":
             if not can_hover:
-                rec = "⚠️ 推力不足，执行受控下降，避免急动作。"
+                rec = "⚠️ Insufficient thrust. Execute a controlled descent to avoid sudden movements."
             elif max_moment > 60:
-                rec = "⚠️ 力矩失衡明显，降低速度，寻找最近着陆点。"
+                rec = "⚠️ The torque imbalance is obvious. Reduce the speed and search for the nearest landing point."
             else:
-                rec = "⚠️ 系统降级运行，建议尽快返航，减少机动动作。"
+                rec = "⚠️ The system is operating in a degraded mode. It is recommended that you return to base as soon as possible and reduce the number of maneuvers."
         else:
             if failed_count == 0 and degraded_count == 0:
-                rec = "✅ 系统正常，所有旋翼健康。"
+                rec = "✅ The system is operating normally and all rotors are in good condition."
             else:
-                rec = "✅ 系统可正常飞行，保持监控。"
+                rec = "✅ The system is operating normally and is under continuous monitoring."
 
         return FaultAnalysis(
             rotor_thrusts_N=thrusts,

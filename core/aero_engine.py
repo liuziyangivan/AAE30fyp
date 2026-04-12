@@ -80,6 +80,7 @@ class AeroEngine:
         # 径向积分节点（跳过桨根 5%）
         self.r_arr = np.linspace(0.05 * self.R, self.R, self.N_ELEMENTS)
         self.dr    = self.r_arr[1] - self.r_arr[0]
+        self._hover_rpm_cache: float | None = None
 
     # ── 单旋翼 BET 积分 ───────────────────────────────────
     def _compute_rotor(self, rpm: float) -> RotorPerformance:
@@ -99,7 +100,7 @@ class AeroEngine:
             self.v.total_weight_N / self.v.rotors.count
             / (2 * self.rho * A), 0.0)) / v_tip
 
-        for _ in range(50):   # 迭代收敛
+        for _ in range(20):   # 迭代收敛
             V_i    = lambda_i * v_tip
             V_t    = omega * r
             phi    = np.arctan2(V_i, V_t)
@@ -146,18 +147,22 @@ class AeroEngine:
 
     # ── 求解悬停转速（二分法）────────────────────────────
     def _solve_hover_rpm(self) -> float:
-        """求单旋翼需提供 W/n 推力时的 RPM"""
+        """求悬停 RPM，结果缓存（飞行中重力不变，无需重算）"""
+        if self._hover_rpm_cache is not None:
+            return self._hover_rpm_cache
+ 
         W_per_rotor = self.v.total_weight_N / self.v.rotors.count
         lo, hi = 100.0, float(self.v.rotors.rpm_max)
-
-        for _ in range(60):   # 二分 60 次，精度 < 0.001 RPM
+ 
+        for _ in range(60):
             mid = (lo + hi) / 2
             if self._compute_rotor(mid).thrust_N < W_per_rotor:
                 lo = mid
             else:
                 hi = mid
-
-        return (lo + hi) / 2
+ 
+        self._hover_rpm_cache = (lo + hi) / 2
+        return self._hover_rpm_cache
 
     # ── 公开接口 ─────────────────────────────────────────
     def compute(self, rpm: float) -> VehiclePerformance:
