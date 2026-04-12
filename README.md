@@ -14,12 +14,62 @@ A comprehensive digital twin framework for a conceptual electric Vertical Take�
 
 ## Table of Contents  
 - Features
-- 
+  
 - Project Structure
+  
 - Installation
+  
 - Quick Start
+  
 - Usage Guide
+  
 - Testing
+  
 - Contributor
+
+
 ## Features  
+| Module | Description |
+|-------|-------|
+| Aerodynamic Core | Blade Element Theory (BET) engine computing thrust, torque, power, and Figure of Merit (FM). |
+| Flight Simulator | 6‑DOF physics with waypoint navigation, battery discharge modeling, ground effect & motor lag. |  
+| Live Dashboard | Real‑time altitude, RPM, thrust, power gauges with manual RPM override and auto‑flight controls. |  
+| Parametric Design | Interactive modification of rotor radius, chord, blade count, mass, etc. with immediate feedback of RPM. |
+| Data Recording | Automatic CSV logging of all flight parameters; replay any previous flight with speed control. |  
+| 3D Visualization | OpenGL rendering of the eVTOL model, animated rotors, thrust cones, and altitude‑colored trail. |  
+| Fault Injection | Simulate single‑rotor failure to evaluate emergency descent behavior (planned). |
+
+## Project Structure  
+```plaintext
+evtol_digital_twin/
+├── configs/
+│   └── quad_evtol.yaml          # Vehicle parameters
+├── core/
+│   ├── vehicle.py               # YAML loader & dataclasses
+│   ├── aero_engine.py           # Blade Element Theory implementation
+│   ├── event_bus.py             # Publish/subscribe event system
+│   ├── digital_twin.py          # Real‑time state machine
+│   ├── performance_analysis.py  # RPM sweep & endurance
+│   ├── design_editor.py         # Parametric design logic
+│   └── data_recorder.py         # CSV logging  
+│   └── fault_injector.py        # Planned fault calculation
+├── simulation/
+│   └── flight_sim.py            # 6‑DOF simulator with waypoints & battery
+├── gui/
+│   ├── main_window.py           # Main PyQt6 application
+│   ├── altitude_plot.py         # Real‑time scrolling plot
+│   ├── envelope_panel.py        # Performance analysis tab
+│   └── widgets/
+│       ├── replay_widget.py     # Flight replay interface
+│       ├── design_widget.py     # Parametric design panel
+│       └── view3d_widget.py     # OpenGL 3D visualization  
+│       └── fault_widget.py      # Fault introduction panel
+├── tests/                       # Unit tests
+├── data/                        # Recorded flight CSV files
+├── main.py                      # Application entry point
+├── requirements.txt
+└── README.md
+```
+
+
 
