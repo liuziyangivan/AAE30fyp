@@ -71,7 +71,7 @@ evtol_digital_twin/
 ## Installation  
 1.Clone the repository
 ```bash
-git clone https://github.com/liuziyangivan/AAE-30-Final-Year-Project.git
+git clone https://github.com/liuziyangivan/AAE30fyp.git
 cd evtol-digital-twin
 ```
 
