@@ -72,7 +72,7 @@ evtol_digital_twin/
 1.Clone the repository
 ```bash
 git clone https://github.com/liuziyangivan/AAE30fyp.git
-cd evtol-digital-twin
+cd *Your path to AAE30fyp*
 ```
 
 2.Create and activate a virtual environment (recommended)
@@ -89,7 +89,7 @@ pip install -r requirements.txt
 ## Quick start
 Launch the main application:  
 ```bash
-cd evtol-digital-twin
+cd *Your path to AAE30fyp*
 python main.py
 ```
 Run all unit tests:
